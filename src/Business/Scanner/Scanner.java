@@ -19,18 +19,45 @@ public class Scanner {
             String cleanedCode = removeComments(readFile(inputFile));
             String[] lines = cleanedCode.split("\n");
             int lineNumber = 1;
+            int flagString = 0;
+            int tokenTOTAL = 0;
+            String temporaryWord = "";
             for (String cleanLine : lines) {
                 String[] words = cleanLine.split("\\s+");
                 
                 for (String word : words) {
+
                     if (!word.trim().isEmpty()) {
-                        Token token = Dictionary.getTokenFromCode(word, lineNumber);
-                        tokens.add(token);
-                        System.out.println("Token: " + token + " (Line: " + lineNumber + ")");
-                    }
+                        if(word.charAt(0) == '\"' && flagString == 1){
+                            if(word.charAt(word.length()-1) != '\"' && word.length() > 1){
+                                temporaryWord += (" " + word);
+
+
+                            }else{
+                                Token token = Dictionary.getTokenFromCode(temporaryWord, lineNumber);
+                                tokens.add(token);
+                                System.out.println(token.getName() + " (Line: " + lineNumber + ")");
+                                tokenTOTAL++;
+
+                                temporaryWord = "";
+                                flagString = 0;
+                            }
+                        }else{
+                            tokenTOTAL++;
+                            flagString = 1;
+                            Token token = Dictionary.getTokenFromCode(word, lineNumber);
+                            tokens.add(token);
+                            System.out.println( token.getName() + " (Line: " + lineNumber + ")");
+
+
+                        }
+                        }
                 }
                 lineNumber++;
+
+
             }
+            System.out.println("Total Tokens: " + tokenTOTAL);
         } catch (IOException e) {
             e.printStackTrace();
         }

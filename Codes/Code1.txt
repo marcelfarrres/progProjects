@@ -1,25 +1,25 @@
 main {
-    number firstNumber = 0;
-    number secondNumber = 1;
-    number fibNext = 0;
-    number counter = 3;
-    number maxLimit = 10;
+    number firstNumber = 0 ;
+    number secondNumber = 1 ;
+    number fibNext = 0 ;
+    number counter = 3 ;
+    number maxLimit = 10 ;
 
-    print("Fibonacci Series:");
-    print(firstNumber);
-    print(secondNumber);
+    print ( "Fibonacci Series:" ) ;
+    print ( firstNumber ) ;
+    print ( secondNumber ) ;
 
-    repeat_until (counter > maxLimit) {
-        fibNext = firstNumber + secondNumber;
-        print(fibNext);
+    repeat_until ( counter > maxLimit ) {
+        fibNext = firstNumber + secondNumber ;
+        print ( fibNext ) ;
 
-        if (fibNext NOT= 0) {
-            firstNumber = secondNumber;
-            secondNumber = fibNext;
+        if ( fibNext NOT = 0 ) {
+            firstNumber = secondNumber ;
+            secondNumber = fibNext ;
         } otherwise {
-            print("Unexpected zero encountered");
+            print ( "Unexp ected zeroenco unt ered" ) ;
         }
 
-        counter = counter + 1;
+        counter = counter + 1 ;
     }
 }
