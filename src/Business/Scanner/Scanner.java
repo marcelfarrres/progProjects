@@ -28,12 +28,15 @@ public class Scanner {
                 for (String word : words) {
 
                     if (!word.trim().isEmpty()) {
-                        if(word.charAt(0) == '\"' && flagString == 1){
+                        if(word.charAt(0) == '\"' || flagString == 1){
                             if(word.charAt(word.length()-1) != '\"' && word.length() > 1){
                                 temporaryWord += (" " + word);
+                                flagString = 1;
 
 
                             }else{
+                                temporaryWord += (" " + word);
+                                temporaryWord = temporaryWord.substring(1);
                                 Token token = Dictionary.getTokenFromCode(temporaryWord, lineNumber);
                                 tokens.add(token);
                                 System.out.println(token.getName() + " (Line: " + lineNumber + ")");
@@ -44,7 +47,7 @@ public class Scanner {
                             }
                         }else{
                             tokenTOTAL++;
-                            flagString = 1;
+
                             Token token = Dictionary.getTokenFromCode(word, lineNumber);
                             tokens.add(token);
                             System.out.println( token.getName() + " (Line: " + lineNumber + ")");

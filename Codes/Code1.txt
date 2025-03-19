@@ -13,7 +13,7 @@ main {
         fibNext = firstNumber + secondNumber ;
         print ( fibNext ) ;
 
-        if ( fibNext NOT = 0 ) {
+        if ( fibNext NOT= 0 ) {
             firstNumber = secondNumber ;
             secondNumber = fibNext ;
         } otherwise {
