@@ -18,10 +18,12 @@ public class Literal extends Token {
         this.valueInt = null; 
     }
 
+    @Override
     public Integer getValueInt() {
         return valueInt;
     }
 
+    @Override
     public String getValueString() {
         return valueString;
     }

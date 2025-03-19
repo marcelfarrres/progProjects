@@ -39,7 +39,7 @@ public class Scanner {
                                 temporaryWord = temporaryWord.substring(1);
                                 Token token = Dictionary.getTokenFromCode(temporaryWord, lineNumber);
                                 tokens.add(token);
-                                System.out.println(token.getName() + " (Line: " + lineNumber + ")");
+                                System.out.println(token.getName() + " (Line: " + lineNumber + ") " + token.getValueString());
                                 tokenTOTAL++;
 
                                 temporaryWord = "";

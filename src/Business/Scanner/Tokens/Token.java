@@ -22,4 +22,12 @@ public class Token {
         return line;
     }
 
+    public Integer getValueInt() {
+        return null;
+    }
+
+    public String getValueString() {
+        return null;
+    }
+
 }
