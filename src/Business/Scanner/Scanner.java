@@ -1,9 +1,6 @@
 package Business.Scanner;
 
 import Business.Scanner.Tokens.Token;
-import Business.Scanner.Tokens.Literal;
-import Business.Scanner.Dictionary;
-
 
 import java.io.*;
 import java.util.ArrayList;
@@ -24,22 +21,20 @@ public class Scanner {
             String temporaryWord = "";
             for (String cleanLine : lines) {
                 String[] words = cleanLine.split("\\s+");
-                
+
                 for (String word : words) {
 
                     if (!word.trim().isEmpty()) {
-                        if(word.charAt(0) == '\"' || flagString == 1){
-                            if(word.charAt(word.length()-1) != '\"' && word.length() > 1){
+                        if(word.charAt(0) == '"' || flagString == 1){
+                            if(word.charAt(word.length()-1) != '"' && word.length() > 1){
                                 temporaryWord += (" " + word);
                                 flagString = 1;
-
-
                             }else{
                                 temporaryWord += (" " + word);
                                 temporaryWord = temporaryWord.substring(1);
                                 Token token = Dictionary.getTokenFromCode(temporaryWord, lineNumber);
                                 tokens.add(token);
-                                System.out.println(token.getName() + " (Line: " + lineNumber + ") " + token.getValueString());
+                                System.out.println(token.getName() + " (Line: " + lineNumber + ") " + token.getValue());
                                 tokenTOTAL++;
 
                                 temporaryWord = "";
@@ -47,18 +42,13 @@ public class Scanner {
                             }
                         }else{
                             tokenTOTAL++;
-
                             Token token = Dictionary.getTokenFromCode(word, lineNumber);
                             tokens.add(token);
-                            System.out.println( token.getName() + " (Line: " + lineNumber + ")");
-
-
+                            System.out.println(token.getName() + " (Line: " + lineNumber + ") " + token.getValue());
                         }
-                        }
+                    }
                 }
                 lineNumber++;
-
-
             }
             System.out.println("Total Tokens: " + tokenTOTAL);
         } catch (IOException e) {
