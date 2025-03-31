@@ -2,16 +2,17 @@ package Business.Scanner.Tokens;
 
 
 public class Token {
-    
 
-    
+
+
     private Integer line; // line of where token is found
     private String name; // token from the disctionary
+    private String value; // El valor si es una cadena
 
-    
-    public Token(String name, Integer line){
+    public Token(String value, String name, Integer line){
         this.name = name;
         this.line = line;
+        this.value = value;
     }
 
     public String getName() {
@@ -22,12 +23,8 @@ public class Token {
         return line;
     }
 
-    public Integer getValueInt() {
-        return null;
-    }
-
-    public String getValueString() {
-        return null;
+    public String getValue() {
+        return value;
     }
 
 }
