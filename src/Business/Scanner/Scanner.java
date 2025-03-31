@@ -1,9 +1,6 @@
 package Business.Scanner;
 
 import Business.Scanner.Tokens.Token;
-import Business.Scanner.Tokens.Literal;
-import Business.Scanner.Dictionary;
-
 
 import java.io.*;
 import java.util.ArrayList;
@@ -13,7 +10,8 @@ public class Scanner {
 
     public static final String inputFile = "Codes/Code1.txt";
 
-    public static List<Token> scan() {
+
+    public List<Token> scan() {
         List<Token> tokens = new ArrayList<>();
         try {
             String cleanedCode = removeComments(readFile(inputFile));
@@ -24,22 +22,19 @@ public class Scanner {
             String temporaryWord = "";
             for (String cleanLine : lines) {
                 String[] words = cleanLine.split("\\s+");
-                
+
                 for (String word : words) {
 
                     if (!word.trim().isEmpty()) {
-                        if(word.charAt(0) == '\"' || flagString == 1){
-                            if(word.charAt(word.length()-1) != '\"' && word.length() > 1){
+                        if(word.charAt(0) == '"' || flagString == 1){
+                            if(word.charAt(word.length()-1) != '"' && word.length() > 1){
                                 temporaryWord += (" " + word);
                                 flagString = 1;
-
-
                             }else{
                                 temporaryWord += (" " + word);
                                 temporaryWord = temporaryWord.substring(1);
                                 Token token = Dictionary.getTokenFromCode(temporaryWord, lineNumber);
                                 tokens.add(token);
-                                System.out.println(token.getName() + " (Line: " + lineNumber + ") " + token.getValueString());
                                 tokenTOTAL++;
 
                                 temporaryWord = "";
@@ -47,23 +42,17 @@ public class Scanner {
                             }
                         }else{
                             tokenTOTAL++;
-
                             Token token = Dictionary.getTokenFromCode(word, lineNumber);
                             tokens.add(token);
-                            System.out.println( token.getName() + " (Line: " + lineNumber + ")");
-
-
                         }
-                        }
+                    }
                 }
                 lineNumber++;
-
-
             }
-            System.out.println("Total Tokens: " + tokenTOTAL);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         return tokens;
     }
 
@@ -82,5 +71,11 @@ public class Scanner {
         code = code.replaceAll("/\\*.*?\\*/", "");
         code = code.replaceAll("//.*", "");
         return code.trim();
+    }
+
+    public static void printTokens(List<Token> tokens){
+        for(Token token : tokens){
+            System.out.println(token.getName() + " (Line:  " + token.getLine() + ") " + token.getValue());
+        }
     }
 }
