@@ -19,6 +19,7 @@ public class Parser {
         grammarAnalysis.analyzeGrammar();
         grammarMap = grammarAnalysis.getGrammarMap();
         FirstFollowBuilder firstFollowBuilder = new FirstFollowBuilder(grammarMap);
+        ParsingTableBuilder parsingTableBuilder = new ParsingTableBuilder(firstFollowBuilder.getGrammarMap(), firstFollowBuilder.getFirstSet(), firstFollowBuilder.getFollowSet());
     }
 
 }

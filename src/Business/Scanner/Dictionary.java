@@ -22,8 +22,8 @@ public class Dictionary {
             case "break" -> new Token(word, "break", line);
             case "yay" -> new Token(word, "true", line);
             case "nay" -> new Token(word, "false", line);
-            case "process_" -> new Token(word, "process_", line);
-            case "light_process_" -> new Token(word, "light_process", line);
+            case "process" -> new Token(word, "process_", line);
+            case "light_process" -> new Token(word, "light_process", line);
             case "ascii" -> new Token(word, "ascii", line);
             case "(" -> new Token(word, "op", line);
             case ")" -> new Token(word, "cp", line);

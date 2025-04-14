@@ -18,7 +18,7 @@ public class GrammarAnalysis {
 
     public void analyzeGrammar() {
         try {
-            Scanner scanner = new Scanner(new File("FilesToUse/grammarFile.txt"));
+            Scanner scanner = new Scanner(new File("FilesToUse/test2.txt"));
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (line.isEmpty() || line.startsWith("//")) {
@@ -31,14 +31,15 @@ public class GrammarAnalysis {
 
                     // Preserve operators and avoid breaking symbols incorrectly
                     List<String> productionList = new ArrayList<>();
-                    String[] productions = right.split("\\|");
+                    String[] productions = right.split("(?<!\\|)\\|(?!\\|)");
+
 
                     for (String production : productions) {
                         production = production.trim();
 
                         // Fix for operators
-                        production = production.replaceAll("\"", ""); // Remove quotes around special characters
-                        production = production.replaceAll("assign", "="); // Convert to standard assignment
+                        //production = production.replaceAll("\"", ""); // Remove quotes around special characters
+                        //production = production.replaceAll("assign", "="); // Convert to standard assignment
 
                         productionList.add(production);
                     }

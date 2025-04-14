@@ -9,16 +9,13 @@
 <parameter-list> ::= ε | <parameter> <parameter-tail>
 <parameter-tail> ::= , <parameter> <parameter-tail> | ε
 <parameter> ::= <data-type> identifier
-<variable-declaration> ::= <data-type> identifier <assign> <literal> ;
+<variable-declaration> ::= <data-type> identifier = <literal> ;
 <data-type> ::= number | boolean | character | word
 <literal> ::= string | int | char | bool
-<statement> ::= <variable-declaration> | <function-call> | <jump-statement> | <iteration-statement> | <selection-statement>
-             | <expression-statement> | <decision-statement>
+<statement> ::= <variable-declaration> | <function-call> | get_back <expression-statement> | <iteration-statement> | <selection-statement> | <expression-statement> | <decision-statement>
 <function-call> ::= <function-name> op <parameter-list> cp
 <expression-statement> ::= <expression> ;
-<selection-statement> ::= if op <expression-statement> cp ocb <statement> ccb otherwise ocb <statement> ccb
-                        | if op <expression-statement> cp ocb <statement> ccb
-                        | decision-block op <expression-statement> cp ocb <decision-statement> ccb
+<selection-statement> ::= if op <expression-statement> cp ocb <statement> ccb otherwise ocb <statement> ccb | if op <expression-statement> cp ocb <statement> ccb | decision-block op <expression-statement> cp ocb <decision-statement> ccb
 <iteration-statement> ::= repeat-until op <expression-statement> cp ocb <statement> ccb
 <decision-statement> ::= decision-block op <expression-statement> cp ocb <case-list> <default-case> ccb
 <case-list> ::= <case-statement> <case-list-tail>
@@ -27,23 +24,22 @@
 <case-statement-tail> ::= <statement> <case-statement-tail> | ε
 <default-case> ::= default : <statement> <default-case-tail> break ;
 <default-case-tail> ::= <statement> <default-case-tail> | ε
-<expression> ::= <assignment-expression> | <arithmetic-expression> | <increment-expression>
-              | <decrement-expression> | <logical-expression>
-<increment-expression> ::= identifier "++" | "++" identifier
-<decrement-expression> ::= identifier "--" | "--" identifier
-<assignment-expression> ::= identifier assign <expression>
+<expression> ::= <assignment-expression> | <arithmetic-expression> | <increment-expression> | <decrement-expression> | <logical-expression>
+<increment-expression> ::= identifier ++ | ++ identifier
+<decrement-expression> ::= identifier -- | -- identifier
+<assignment-expression> ::= identifier = <expression>
 <arithmetic-expression> ::= <term> | <arithmetic-expression> <add-sub-operator> <term>
 <term> ::= <factor> | <term> <mul-div-mod-operator> <factor>
-<factor> ::= <operand> | op <arithmetic-expression> cp | <unary-expression>
+<factor> ::= <operand> | op <arithmetic-expression> cp | <increment-expression> | <decrement-expression>
 <operand> ::= identifier | <literal>
 <add-sub-operator> ::= + | -
 <mul-div-mod-operator> ::= * | / | %
 <logical-expression> ::= <logical-term> <logical-expression-tail> | op <logical-expression> cp
 <logical-expression-tail> ::= <logical-operator> <logical-expression> | ε
-<logical-term> ::= <relational-expression> | <not> <logical-term>
+<logical-term> ::= <relational-expression> | ! <logical-term>
 <relational-expression> ::= <operand> <relational-operator> <operand>
-<logical-operator> ::= <and> | <or> | <not> ;
-<relational-operator> ::= <equality> | <not-equal> | <greater> | <less> | <greater-equal> | <less-equal> ;
+<logical-operator> ::= && | || | ! ;
+<relational-operator> ::= == | != | > | < | >= | <= ;
 <special-function> ::= <ascii-function> | <print-function> | <scan-function>
 <ascii-function> ::= ascii op <expression> cp ;
 <print-function> ::= print op <print-arguments> cp ;
