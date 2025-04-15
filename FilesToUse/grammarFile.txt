@@ -1,47 +1,105 @@
 <program> ::= <process-declarations> <main-declaration>
-<main-declaration> ::= main ocb <function-body> ccb
+
 <process-declarations> ::= <process-declaration> <process-declarations> | <light-process-declaration> <process-declarations> | ε
+
+<main-declaration> ::= main ocb <function-body> ccb
+
 <process-declaration> ::= <data-type> <function-name> op <parameter-list> cp ocb <function-body> ccb
+
 <light-process-declaration> ::= <light-function-name> op <parameter-list> cp ocb <function-body> ccb
-<function-body> ::= <statement> <function-body> | ε
-<function-name> ::= process <literal>
-<light-function-name> ::= light-process <literal>
-<parameter-list> ::= ε | <parameter> <parameter-tail>
+
+<parameter-list> ::= <parameter> <parameter-tail> | ε
+
 <parameter-tail> ::= , <parameter> <parameter-tail> | ε
+
 <parameter> ::= <data-type> identifier
+
+<function-body> ::= <statement> <function-body> | ε
+
+<statement> ::= <variable-declaration> | identifier = <expression> ; | <light-function-call> | get_back <expression> ; | <iteration-statement> | <selection-statement> | <decision-statement> | <expression> ; | <special-function> ;
+
 <variable-declaration> ::= <data-type> identifier = <literal> ;
-<data-type> ::= number | boolean | character | word
-<literal> ::= string | int | char | bool
-<statement> ::= <variable-declaration> | <function-call> | get_back <expression-statement> | <iteration-statement> | <selection-statement> | <expression-statement> | <decision-statement>
-<function-call> ::= <function-name> op <parameter-list> cp
-<expression-statement> ::= <expression> ;
-<selection-statement> ::= if op <expression-statement> cp ocb <statement> ccb otherwise ocb <statement> ccb | if op <expression-statement> cp ocb <statement> ccb | decision-block op <expression-statement> cp ocb <decision-statement> ccb
-<iteration-statement> ::= repeat-until op <expression-statement> cp ocb <statement> ccb
-<decision-statement> ::= decision-block op <expression-statement> cp ocb <case-list> <default-case> ccb
-<case-list> ::= <case-statement> <case-list-tail>
+
+<expression> ::= <logical-or-expression>
+
+<logical-or-expression> ::= <logical-and-expression> <logical-or-prime>
+
+<logical-or-prime> ::= || <logical-and-expression> <logical-or-prime> | ε
+
+<logical-and-expression> ::= <equality-expression> <logical-and-prime>
+
+<logical-and-prime> ::= && <equality-expression> <logical-and-prime> | ε
+
+<equality-expression> ::= <relational-expression> <equality-prime>
+
+<equality-prime> ::= <equality-operator> <relational-expression> <equality-prime> | ε
+
+<equality-operator> ::= == | !=
+
+<relational-expression> ::= <additive-expression> <relational-prime>
+
+<relational-prime> ::= <relational-operator> <additive-expression> <relational-prime> | ε
+
+<relational-operator> ::= > | < | >= | <=
+
+<additive-expression> ::= <multiplicative-expression> <additive-prime>
+
+<additive-prime> ::= <additive-operator> <multiplicative-expression> <additive-prime> | ε
+
+<additive-operator> ::= + | -
+
+<multiplicative-expression> ::= <unary-expression> <multiplicative-prime>
+
+<multiplicative-prime> ::= <multiplicative-operator> <unary-expression> <multiplicative-prime> | ε
+
+<multiplicative-operator> ::= * | / | %
+
+<unary-expression> ::= <postfix-expression> | ++ <unary-expression> | -- <unary-expression> | - <unary-expression> | ! <unary-expression>
+
+<postfix-expression> ::= <primary-expression> <postfix-prime>
+
+<postfix-prime> ::= ++ <postfix-prime> | -- <postfix-prime> | ε
+
+<primary-expression> ::= identifier | <literal> | op <expression> cp | <process-function-call>
+
+<selection-statement> ::= if op <expression> cp ocb <statement> ccb | if op <expression> cp ocb <statement> ccb otherwise ocb <statement> ccb | decision_block op <expression> cp ocb <decision-statement> ccb
+
+<iteration-statement> ::= repeat_until op <expression> cp ocb <statement> ccb
+
+<decision-statement> ::= decision_block op <expression> cp ocb <case-list> <default-case> ccb
+
+<case-list> ::= <case-statement> <case-list-tail> | ε
+
 <case-list-tail> ::= <case-statement> <case-list-tail> | ε
-<case-statement> ::= case <literal> : <case-statement-tail> break ;
-<case-statement-tail> ::= <statement> <case-statement-tail> | ε
-<default-case> ::= default : <statement> <default-case-tail> break ;
-<default-case-tail> ::= <statement> <default-case-tail> | ε
-<expression> ::= <assignment-expression> | <arithmetic-expression> | <increment-expression> | <decrement-expression> | <logical-expression>
-<increment-expression> ::= identifier ++ | ++ identifier
-<decrement-expression> ::= identifier -- | -- identifier
-<assignment-expression> ::= identifier = <expression>
-<arithmetic-expression> ::= <term> | <arithmetic-expression> <add-sub-operator> <term>
-<term> ::= <factor> | <term> <mul-div-mod-operator> <factor>
-<factor> ::= <operand> | op <arithmetic-expression> cp | <increment-expression> | <decrement-expression>
-<operand> ::= identifier | <literal>
-<add-sub-operator> ::= + | -
-<mul-div-mod-operator> ::= * | / | %
-<logical-expression> ::= <logical-term> <logical-expression-tail> | op <logical-expression> cp
-<logical-expression-tail> ::= <logical-operator> <logical-expression> | ε
-<logical-term> ::= <relational-expression> | ! <logical-term>
-<relational-expression> ::= <operand> <relational-operator> <operand>
-<logical-operator> ::= && | || | ! ;
-<relational-operator> ::= == | != | > | < | >= | <= ;
-<special-function> ::= <ascii-function> | <print-function> | <scan-function>
-<ascii-function> ::= ascii op <expression> cp ;
+
+<case-statement> ::= case <literal> : <case-body> break ;
+
+<case-body> ::= <statement> <case-body> | ε
+
+<default-case> ::= default : <case-body> break ;
+
 <print-function> ::= print op <print-arguments> cp ;
-<print-arguments> ::= <expression> | <expression> , <print-arguments>
-<scan-function> ::= scan op identifier cp ;
+
+<print-arguments> ::= <expression> <print-arguments-tail> | ε
+
+<print-arguments-tail> ::= , <expression> <print-arguments-tail> | ε
+
+<ascii-function> ::= ascii op <expression> cp
+
+<scan-function> ::= scan op identifier cp
+
+<special-function> ::= <ascii-function> | <print-function> | <scan-function>
+
+<light-function-call> ::= <light-function-name> op <parameter-list> cp
+
+<process-function-call> ::= <function-name> op <parameter-list> cp
+
+<function-name> ::= process <literal>
+
+<light-function-name> ::= light-process <literal>
+
+<literal> ::= string | int | char | bool
+
+<data-type> ::= number | boolean | character | word
+
+<logical-operator> ::= && | || | !

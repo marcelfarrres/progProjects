@@ -12,14 +12,15 @@ public class Parser {
 
     public Parser(List<Token> ScannerListOfTokens){
         this.tokenFromScanner = ScannerListOfTokens;
-    }
-
-    public void parse(){
         GrammarAnalysis grammarAnalysis = new GrammarAnalysis(tokenFromScanner);
         grammarAnalysis.analyzeGrammar();
         grammarMap = grammarAnalysis.getGrammarMap();
         FirstFollowBuilder firstFollowBuilder = new FirstFollowBuilder(grammarMap);
         ParsingTableBuilder parsingTableBuilder = new ParsingTableBuilder(firstFollowBuilder.getGrammarMap(), firstFollowBuilder.getFirstSet(), firstFollowBuilder.getFollowSet());
+    }
+
+    public void parse(){
+        System.out.println("Parsing the tokens...");
     }
 
 }

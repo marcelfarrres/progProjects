@@ -21,9 +21,9 @@
 <logical-expression-tail> ::= <logical-operator> <logical-expression> | ε
 <logical-term> ::= <relational-expression> | ! <logical-term>
 <relational-expression> ::= <operand> <relational-operator> <operand>
-<selection-statement> ::= if op <expression> cp ocb <statement> ccb | if op <expression> cp ocb <statement> ccb otherwise ocb <statement> ccb | decision-block op <expression> cp ocb <decision-statement> ccb
-<iteration-statement> ::= repeat-until op <expression> cp ocb <statement> ccb
-<decision-statement> ::= decision-block op <expression> cp ocb <case-list> <default-case> ccb
+<selection-statement> ::= if op <expression> cp ocb <statement> ccb | if op <expression> cp ocb <statement> ccb otherwise ocb <statement> ccb | decision_block op <expression> cp ocb <decision-statement> ccb
+<iteration-statement> ::= repeat_until op <expression> cp ocb <statement> ccb
+<decision-statement> ::= decision_block op <expression> cp ocb <case-list> <default-case> ccb
 <case-list> ::= <case-statement> <case-list-tail>
 <case-list-tail> ::= <case-statement> <case-list-tail> | ε
 <case-statement> ::= case <literal> : <case-statement-tail> break ;

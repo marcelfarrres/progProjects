@@ -112,7 +112,7 @@ public class FirstFollowBuilder {
             followSet.put(nonTerminal, new HashSet<>());
         }
 
-        followSet.get("<E>").add("$");
+        followSet.get("<program>").add("$");
     }
 
 

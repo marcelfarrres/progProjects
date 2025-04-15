@@ -18,7 +18,7 @@ public class GrammarAnalysis {
 
     public void analyzeGrammar() {
         try {
-            Scanner scanner = new Scanner(new File("FilesToUse/test2.txt"));
+            Scanner scanner = new Scanner(new File("FilesToUse/grammarFile.txt"));
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (line.isEmpty() || line.startsWith("//")) {
