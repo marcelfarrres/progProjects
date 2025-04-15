@@ -9,7 +9,10 @@ public class ParsingTableBuilder {
     private HashMap<String, Set<String>> followSet;
     private HashMap<String, HashMap<String, String>> parsingTable;
 
-    public ParsingTableBuilder(HashMap<String, List<String>> grammarMap, HashMap<String, Set<String>> firstSet, HashMap<String, Set<String>> followSet) {
+    public ParsingTableBuilder(HashMap<String, List<String>> grammarMap,
+                               HashMap<String, Set<String>> firstSet,
+                               HashMap<String, Set<String>> followSet) {
+
         this.grammarMap = grammarMap;
         this.firstSet = firstSet;
         this.followSet = followSet;
@@ -21,16 +24,20 @@ public class ParsingTableBuilder {
     private void buildParsingTable() {
         for (String nonTerminal : grammarMap.keySet()) {
             parsingTable.put(nonTerminal, new HashMap<>());
+
             for (String production : grammarMap.get(nonTerminal)) {
-                String[] symbols = production.split(" ");
+                // Compute FIRST of the entire production
+                String[] symbols = production.split("\\s+");
                 Set<String> first = computeFirstOfProduction(symbols);
 
+                // For each terminal in FIRST, map it to this production (unless it's ε)
                 for (String terminal : first) {
                     if (!terminal.equals("ε")) {
                         parsingTable.get(nonTerminal).put(terminal, production);
                     }
                 }
 
+                // If FIRST contains ε, then also use FOLLOW(nonTerminal)
                 if (first.contains("ε")) {
                     Set<String> follow = followSet.get(nonTerminal);
                     for (String terminal : follow) {
@@ -41,57 +48,64 @@ public class ParsingTableBuilder {
         }
     }
 
+    // Returns the FIRST set of a sequence of symbols (like <T> <E'>), stopping if a terminal is found
     private Set<String> computeFirstOfProduction(String[] symbols) {
         Set<String> result = new HashSet<>();
-        boolean containsEpsilon = true;
+        boolean allCouldProduceEpsilon = true;
 
         for (String symbol : symbols) {
+            // If it's terminal, add it and stop
             if (isTerminal(symbol)) {
                 result.add(symbol);
-                containsEpsilon = false;
+                allCouldProduceEpsilon = false;
                 break;
             } else {
-                Set<String> first = firstSet.get(symbol);
-                result.addAll(first);
-                if (!first.contains("ε")) {
-                    containsEpsilon = false;
+                // Otherwise, add that non-terminal’s FIRST (except ε)
+                Set<String> symbolFirst = firstSet.get(symbol);
+                result.addAll(symbolFirst);
+                // If this symbol’s FIRST does not have ε, then we stop adding further
+                if (!symbolFirst.contains("ε")) {
+                    allCouldProduceEpsilon = false;
                     break;
                 }
             }
         }
-
-        if (containsEpsilon) {
+        // If every symbol could produce ε, then ε is in FIRST
+        if (allCouldProduceEpsilon) {
             result.add("ε");
         }
-
         return result;
     }
 
     private boolean isTerminal(String symbol) {
+        // Terminal means it's not a key in the grammar
         return !grammarMap.containsKey(symbol);
     }
 
     private void printParsingTable() {
         System.out.println("Parsing Table:");
-        // Print header
-        System.out.print("\t");
+
+        // Gather all terminals (including '$') that appear in any row
         Set<String> terminals = new HashSet<>();
         for (HashMap<String, String> row : parsingTable.values()) {
             terminals.addAll(row.keySet());
         }
+
+        // Print header (list of terminals)
+        System.out.print("\t");
         for (String terminal : terminals) {
             System.out.print(terminal + "\t");
         }
         System.out.println();
 
-        // Print rows
+        // Print each nonterminal row
         for (String nonTerminal : parsingTable.keySet()) {
             System.out.print(nonTerminal + "\t");
             HashMap<String, String> row = parsingTable.get(nonTerminal);
             for (String terminal : terminals) {
-                String production = row.get(terminal);
-                if (production != null) {
-                    System.out.print(production + "\t");
+                String prod = row.get(terminal);
+                if (prod != null) {
+                    System.out.print(prod + "\t");
                 } else {
                     System.out.print("-\t");
                 }
