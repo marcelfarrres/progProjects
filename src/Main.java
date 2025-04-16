@@ -13,11 +13,30 @@ public class Main {
     private static Parser parser;
 
     public static void main(String[] args) throws IOException {
-       
 
-        List<Token> ScannerListOfTokens = scanner.scan();
-        parser = new Parser(ScannerListOfTokens);
-        parser.parse();
+        // --- Scanner Phase ---
+        System.out.println("--- Scanning Code ---");
+        List<Token> scannerListOfTokens = scanner.scan();
+        // Optional: Print tokens
+        // System.out.println("\n--- Tokens ---");
+        // Scanner.printTokens(scannerListOfTokens);
+        System.out.println("Scanning complete.");
 
+        // --- Parser Phase ---
+        System.out.println("\n--- Building Parser Structures (Grammar, First/Follow, Table) ---");
+        parser = new Parser(scannerListOfTokens); // Builds internal structures
+        System.out.println("Parser structures built.");
+
+
+        // --- Parse Tree Construction ---
+        ParseTreeNode parseTreeRoot = parser.parse(); // This now builds the tree
+
+        // --- Print Parse Tree (Optional) ---
+        if (parseTreeRoot != null) {
+            System.out.println("\n--- Parse Tree ---");
+            parseTreeRoot.printTree("", true);
+        } else {
+            System.out.println("\nParse tree could not be constructed due to parsing errors.");
+        }
     }
 }

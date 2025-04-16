@@ -78,7 +78,7 @@
 
 <default-case> ::= default : <case-body> break ;
 
-<print-function> ::= print op <print-arguments> cp ;
+<print-function> ::= print op <print-arguments> cp
 
 <print-arguments> ::= <expression> <print-arguments-tail> | ε
 
