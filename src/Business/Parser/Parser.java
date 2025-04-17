@@ -1,155 +1,199 @@
+// FILE: Business/Parser/Parser.java
 package Business.Parser;
 
+import Business.Scanner.Scanner;
 import Business.Scanner.Tokens.Token;
 import java.util.*;
+import java.io.IOException;
 
 public class Parser {
 
-    private List<Token> tokens;
-    private int currentTokenIndex = 0;
+    private Scanner scanner;
+    private Token currentToken;
     private HashMap<String, List<String>> grammarMap;
+    private HashMap<String, Set<String>> firstSet;
+    private HashMap<String, Set<String>> followSet;
     private HashMap<String, HashMap<String, String>> parsingTable;
-    private ParseTreeNode root; // Root of the parse tree
+    private ParseTreeNode root;
+    private Stack<Object> symbolStack;
+    private Stack<ParseTreeNode> nodeStack;
 
-    // Assume GrammarAnalysis, FirstFollowBuilder, ParsingTableBuilder classes exist and work
-    // Assume Token class exists
-    // Assume ParseTreeNode class exists
+    // Constructor remains the same as the previous version
+    public Parser(Scanner scanner) throws IOException {
+        this.scanner = scanner;
+        this.symbolStack = new Stack<>();
+        this.nodeStack = new Stack<>();
 
-    public Parser(List<Token> scannerListOfTokens) {
-        this.tokens = new ArrayList<>(scannerListOfTokens);
-        // Add end-of-input marker ONLY if your grammar explicitly uses $
-        // If your grammar uses ε for program end, don't add $
-        // Let's assume $ is used based on previous context
-        this.tokens.add(new Token("$", "$", -1)); // End-of-input marker
+        // --- Build Grammar, First/Follow, Parsing Table ---
+        System.out.println("\n--- Initializing Parser and Building Structures ---");
+        try {
+            GrammarAnalysis grammarAnalysis = new GrammarAnalysis(null);
+            grammarAnalysis.analyzeGrammar();
+            this.grammarMap = grammarAnalysis.getGrammarMap();
+            if (this.grammarMap == null || this.grammarMap.isEmpty()) {
+                throw new RuntimeException("Failed to load grammar.");
+            }
 
-        // These lines assume the necessary classes are available and functional
-        // In a real scenario, handle potential exceptions from file loading etc.
-        GrammarAnalysis grammarAnalysis = new GrammarAnalysis(this.tokens); // Pass tokens if needed by GrammarAnalysis
-        grammarAnalysis.analyzeGrammar(); // Loads grammar from file
-        this.grammarMap = grammarAnalysis.getGrammarMap();
+            FirstFollowBuilder firstFollowBuilder = new FirstFollowBuilder(this.grammarMap);
+            this.firstSet = firstFollowBuilder.getFirstSet();
+            this.followSet = firstFollowBuilder.getFollowSet();
 
-        FirstFollowBuilder firstFollowBuilder = new FirstFollowBuilder(this.grammarMap);
-        // You might need to pass first/follow sets to the parsing table builder
-        ParsingTableBuilder parsingTableBuilder = new ParsingTableBuilder(
-                firstFollowBuilder.getGrammarMap(),
-                firstFollowBuilder.getFirstSet(),
-                firstFollowBuilder.getFollowSet()
-        );
-        this.parsingTable = parsingTableBuilder.getParsingTable(); // Gets the generated table
+            ParsingTableBuilder parsingTableBuilder = new ParsingTableBuilder(
+                    this.grammarMap, this.firstSet, this.followSet);
+            this.parsingTable = parsingTableBuilder.getParsingTable();
+            if (this.parsingTable == null || this.parsingTable.isEmpty()) {
+                throw new RuntimeException("Failed to build parsing table.");
+            }
+            System.out.println("Parser structures built successfully.");
+
+        } catch (Exception e) {
+            System.err.println("Error during parser initialization: " + e.getMessage());
+            e.printStackTrace();
+            throw new IOException("Parser initialization failed.", e);
+        }
+        // --- End Structure Building ---
+
+        fetchNextToken(); // Get the first token
     }
 
-    public ParseTreeNode parse() {
-        System.out.println("\nStarting Parse Tree Construction...");
-        Stack<String> symbolStack = new Stack<>();         // Stack for grammar symbols (terminals/non-terminals)
-        Stack<ParseTreeNode> nodeStack = new Stack<>(); // Stack for corresponding ParseTreeNodes (only non-terminals)
+    // fetchNextToken remains the same
+    private void fetchNextToken() throws IOException {
+        currentToken = scanner.nextToken();
+        // Optional: Print fetched token
+        System.out.println(">>> Fetched Token: " + currentToken.getName() +
+                (currentToken.getValue() != null && !currentToken.getValue().equals(currentToken.getName()) ? " ["+currentToken.getValue()+"]" : "") +
+                (currentToken.getName().equals("$") ? "" : " (Line: " + currentToken.getLine() + ")"));
+    }
+
+
+    public ParseTreeNode parse() throws IOException {
+        System.out.println("\nStarting Parse Tree Construction (Token by Token)...");
 
         // Initialize stacks
-        symbolStack.push("$"); // Assuming grammar uses $ as end marker
-        String startSymbol = "<program>"; // Ensure this matches your grammar's start symbol
+        symbolStack.push("$");
+        String startSymbol = "<program>";
+        if (!grammarMap.containsKey(startSymbol)) {
+            System.err.println("Error: Start symbol '" + startSymbol + "' not found in grammar.");
+            return null;
+        }
         symbolStack.push(startSymbol);
-
-        // Create root node and push to node stack
         root = new ParseTreeNode(startSymbol);
-        nodeStack.push(root); // Push the root non-terminal node
+        nodeStack.push(root);
 
+        // Loop until stack has only $ or error
         while (!symbolStack.isEmpty() && !symbolStack.peek().equals("$")) {
-            String topSymbol = symbolStack.peek();
-            Token currentToken = tokens.get(currentTokenIndex);
-            String currentTokenName = currentToken.getName();
-            int currentLine = currentToken.getLine(); // Get current line number
 
-            // System.out.println("\nTop of Stack: " + topSymbol);
-            // System.out.println("Current Token: " + currentTokenName + " (Line: " + currentLine + ")");
+            // --- DETAILED DEBUG LOGGING ---
+            String topSymbol = (String) symbolStack.peek();
+            String currentTokenName = currentToken.getName();
+            int currentLine = currentToken.getLine();
+
+            System.out.println("\n-----------------------------------------");
+            System.out.println(">>> DEBUG: Current Token = " + currentTokenName + " (Line: " + currentLine + ")");
+            System.out.println(">>> DEBUG: Symbol Stack Top = " + topSymbol);
+            System.out.println(">>> DEBUG: Symbol Stack (Full): " + symbolStack);
+            // Print node stack symbols for easier comparison
+            List<String> nodeSymbols = new ArrayList<>();
+            for (ParseTreeNode node : nodeStack) {
+                nodeSymbols.add(node.getSymbol());
+            }
+            System.out.println(">>> DEBUG: Node Stack (Symbols): " + nodeSymbols);
+            System.out.println("-----------------------------------------");
+            // --- END DEBUG LOGGING ---
+
 
             if (isTerminal(topSymbol)) {
+                System.out.println(">>> Action: Trying to match TERMINAL " + topSymbol);
                 if (topSymbol.equals(currentTokenName)) {
-                    // System.out.println("Match Terminal: " + topSymbol + " at line " + currentLine);
-                    symbolStack.pop(); // Pop matched terminal symbol
-
-                    // Create the terminal node and add it as a child to the CURRENT parent node
-                    if (!nodeStack.isEmpty()) {
-                        ParseTreeNode parentNode = nodeStack.peek();
-                        ParseTreeNode terminalNode = new ParseTreeNode(currentToken);
-                        parentNode.addChild(terminalNode);
-                    } else {
-                        // This case should ideally not happen if grammar/logic is correct
-                        System.err.println("Error: Node stack empty when matching terminal " + topSymbol);
-                    }
-                    currentTokenIndex++; // Advance input token
+                    // Match found!
+                    System.out.println(">>> Success: Matched terminal " + topSymbol);
+                    symbolStack.pop();
+                    nodeStack.pop(); // Pop the node for the matched terminal symbol
+                    fetchNextToken(); // Consume token *after* popping
                 } else {
-                    // Pass currentLine to handleError
-                    handleError("Terminal mismatch", topSymbol, currentToken);
+                    handleError("Terminal mismatch", topSymbol, currentToken); // Error
                     root = null;
                     return root;
                 }
-            } else { // Top is Non-Terminal
-                // Look up production in the parsing table
+            }
+            else { // Top is Non-Terminal
+                System.out.println(">>> Action: Trying to expand NON-TERMINAL " + topSymbol);
                 String production = getProduction(topSymbol, currentTokenName);
 
                 if (production != null) {
-                    // *** DEBUG PRINT MODIFIED HERE ***
-                    System.out.println("(Line " + String.format("%-3d", currentLine) + " Token: " + String.format("%-15s", currentTokenName) + ") Applying Rule: " + topSymbol + " ::= " + (production.isEmpty() || production.equals("ε") ? "ε" : production));
-                    // ********************************
+                    // Print rule application
+                    System.out.println("(Line " + String.format("%-3d", currentLine) +
+                            " Token: " + String.format("%-15s", currentTokenName) +
+                            ") Applying Rule: " + topSymbol + " ::= " +
+                            (production.equals("ε") ? "ε" : production));
 
-                    symbolStack.pop(); // Pop the non-terminal symbol
-                    ParseTreeNode parentNode = nodeStack.pop(); // Pop its corresponding node
+                    symbolStack.pop(); // Pop NonTerminal A
+                    ParseTreeNode parentNode = nodeStack.pop(); // Pop corresponding node for A
 
-                    String[] productionSymbols = production.split("\\s+");
+                    String[] productionSymbols = production.isEmpty() || production.equals("ε")
+                            ? new String[0]
+                            : production.split("\\s+");
 
-                    // Handle epsilon production specifically
-                    if (production.equals("ε")) { // Check against consistent epsilon representation
-                        parentNode.addChild(new ParseTreeNode("ε")); // Add epsilon representation
-                        continue; // Epsilon production complete, continue loop
+                    // Handle ε-production
+                    if (productionSymbols.length == 0) {
+                        System.out.println(">>> Action: Applying Epsilon production for " + parentNode.getSymbol());
+                        parentNode.addChild(new ParseTreeNode("ε"));
+                        // DO NOT push anything back onto stacks for epsilon
+                        continue; // Epsilon production handled, continue loop
                     }
 
                     // --- Apply Production ---
-                    // 1. Create child nodes and add them to the parent IN ORDER
-                    List<ParseTreeNode> childNodesForStack = new ArrayList<>();
+                    // 1. Create child nodes and add to parent in grammar order
+                    List<ParseTreeNode> childNodes = new ArrayList<>();
+                    System.out.print(">>> Action: Creating children for " + parentNode.getSymbol() + ": [");
                     for (String prodSymbol : productionSymbols) {
                         if (!prodSymbol.isEmpty()) {
                             ParseTreeNode childNode = new ParseTreeNode(prodSymbol);
+                            childNodes.add(childNode);
                             parentNode.addChild(childNode);
-                            if (!isTerminal(prodSymbol)) {
-                                childNodesForStack.add(childNode);
+                            System.out.print(childNode.getSymbol() + " ");
+                        }
+                    }
+                    System.out.println("]");
+
+                    // 2. Push symbols and nodes onto stacks in REVERSE grammar order
+                    System.out.print(">>> Action: Pushing to stacks (Symbol, Node): ");
+                    for (int i = productionSymbols.length - 1; i >= 0; i--) {
+                        String symbol = productionSymbols[i];
+                        if (!symbol.isEmpty()) {
+                            symbolStack.push(symbol);
+                            if(i < childNodes.size()){
+                                nodeStack.push(childNodes.get(i));
+                                System.out.print("(" + symbol + ", Node(" + childNodes.get(i).getSymbol() + ")) ");
+                            } else {
+                                System.err.println("\nCRITICAL: Mismatch between production symbols and created child nodes for rule: " + production);
+                                return null;
                             }
                         }
                     }
-
-                    // 2. Push production symbols onto the symbolStack in REVERSE order
-                    for (int i = productionSymbols.length - 1; i >= 0; i--) {
-                        String symbol = productionSymbols[i];
-                        // Make sure not to push empty strings if split resulted in them
-                        if (!symbol.isEmpty() && !symbol.equals("ε")) {
-                            symbolStack.push(symbol);
-                        }
-                    }
-
-                    // 3. Push the non-terminal child nodes onto the nodeStack in REVERSE order
-                    for (int i = childNodesForStack.size() - 1; i >= 0; i--) {
-                        nodeStack.push(childNodesForStack.get(i));
-                    }
+                    System.out.println(); // Newline after printing pushes
 
                 } else {
-                    // Pass currentLine to handleError
                     handleError("No production found in table", topSymbol, currentToken);
                     root = null;
                     return root;
                 }
             }
-        }
+        } // End while loop
 
-        // Final check after loop
-        Token finalToken = tokens.get(currentTokenIndex); // Token at the end ($)
-        if (!symbolStack.isEmpty() && symbolStack.peek().equals("$") && finalToken.getName().equals("$")) {
-            System.out.println("\nParsing Successful! Parse tree constructed.");
+        // Final check remains the same
+        if (symbolStack.peek().equals("$") && currentToken.getName().equals("$")) {
+            System.out.println("\nParsing Successful! Parse tree construction complete.");
+            if (!nodeStack.isEmpty()) {
+                System.err.println("Warning: Node stack is not empty after successful parse. Size: " + nodeStack.size());
+            }
         } else {
             System.err.println("\nParsing Failed or Incomplete.");
-            if (symbolStack.isEmpty()) {
-                System.err.println("  Reason: Symbol stack became empty unexpectedly.");
-            } else if (!symbolStack.peek().equals("$")) {
-                System.err.println("  Reason: Stack not empty. Top: " + symbolStack.peek());
-            } else if (!finalToken.getName().equals("$")) {
-                System.err.println("  Reason: Input not fully consumed. Next token: " + finalToken.getName() + " at line " + finalToken.getLine());
+            // Add more detailed error info based on final state
+            if (symbolStack.isEmpty() || !symbolStack.peek().equals("$")) {
+                System.err.println("  Reason: Symbol stack state incorrect. Top: " + (symbolStack.isEmpty() ? "EMPTY" : symbolStack.peek()));
+            } else if (!currentToken.getName().equals("$")) {
+                System.err.println("  Reason: Input not fully consumed. Next token: " + currentToken.getName() + " at line " + currentToken.getLine());
             } else {
                 System.err.println("  Reason: Unknown parsing failure state.");
             }
@@ -160,96 +204,68 @@ public class Parser {
     }
 
 
+    // Helper methods (isTerminal, getProduction, handleError) remain the same
     private boolean isTerminal(String symbol) {
-        // Terminals are symbols not present as keys in the grammar map
-        // Also handle $ conceptually
-        if (symbol.equals("$")) return true; // End marker is terminal
-        // Epsilon (ε) is handled during production application, not treated as a stack symbol here
+        if (symbol == null) return false;
+        if (symbol.equals("$")) return true;
+        if (symbol.equals("ε")) return true;
         return !grammarMap.containsKey(symbol);
     }
 
     private String getProduction(String nonTerminal, String terminal) {
-        // Check if nonTerminal exists in the table
         if (parsingTable.containsKey(nonTerminal)) {
             Map<String, String> row = parsingTable.get(nonTerminal);
-            // Check if the terminal exists in the row for that nonTerminal
             if (row.containsKey(terminal)) {
                 String production = row.get(terminal);
-                // Use "ε" consistently for epsilon checks
-                if (production.equals("ε")) {
-                    return "ε";
+                // Standardize epsilon representation if necessary
+                if (production == null || production.trim().isEmpty()) {
+                    List<String> rules = grammarMap.get(nonTerminal);
+                    for (String rule : rules) {
+                        if (rule.equals("ε") || rule.trim().isEmpty()) return "ε";
+                    }
+                    return null;
                 }
-                // Treat empty string in table as epsilon
-                if (production.trim().isEmpty()) {
-                    return "ε";
-                }
+                if (production.equals("ε")) return "ε"; // Explicit epsilon in table
+
                 return production; // Return the production string
             }
-        }
-        // Check if nonTerminal can produce epsilon and if terminal is in FOLLOW set
-        // This handles the case where the explicit table entry might be missing but epsilon is implied
-        // NOTE: This part requires access to computed First/Follow sets for full accuracy
-        if (firstSetContainsEpsilon(nonTerminal) && followSetContains(nonTerminal, terminal)) {
-            // System.out.println("DEBUG: Implicit epsilon for " + nonTerminal + " on token " + terminal);
-            return "ε"; // Implicit epsilon production
-        }
-
-        // If no explicit production and epsilon isn't implied, return null
-        return null;
-    }
-
-    // Helper to check if First(A) contains epsilon
-    // NOTE: Requires access to actual First sets for full accuracy
-    private boolean firstSetContainsEpsilon(String nonTerminal) {
-        if (grammarMap.containsKey(nonTerminal)) {
-            for (String production : grammarMap.get(nonTerminal)) {
-                // Check if the production itself is epsilon or an empty string
-                if (production.equals("ε") || production.trim().isEmpty()) {
-                    return true;
+            // Check for implicit epsilon based on FOLLOW set (Only if FIRST(A) contains ε)
+            else if (firstSet != null && firstSet.containsKey(nonTerminal) && firstSet.get(nonTerminal).contains("ε")) {
+                if (followSet != null && followSet.containsKey(nonTerminal) && followSet.get(nonTerminal).contains(terminal)) {
+                    List<String> rules = grammarMap.get(nonTerminal);
+                    for (String rule : rules) {
+                        if (rule.equals("ε") || rule.trim().isEmpty()) {
+                            // System.out.println("DEBUG: Implicit epsilon for " + nonTerminal + " on token " + terminal + " via FOLLOW set.");
+                            return "ε"; // Return epsilon based on Follow set check AND grammar confirmation
+                        }
+                    }
                 }
-                // TODO: A more complete check would involve seeing if FIRST(production) contains epsilon
             }
         }
-        // Placeholder/Simplification: Look for explicit epsilon rules
-        Set<String> firstSetForNonTerminal = getFirstSetForRule(nonTerminal); // Needs implementation
-        return firstSetForNonTerminal.contains("ε"); // Check if pre-computed First set has epsilon
-        // return false; // Default if check is not implemented
+        return null; // No production found
     }
 
-    // Helper to check if Follow(A) contains terminal b
-    // NOTE: Requires access to actual Follow sets for full accuracy
-    private boolean followSetContains(String nonTerminal, String terminal) {
-        // Needs proper implementation by passing Follow sets to Parser or re-computing
-        Set<String> followSetForNonTerminal = getFollowSetForRule(nonTerminal); // Needs implementation
-        return followSetForNonTerminal.contains(terminal); // Check if pre-computed Follow set has terminal
-        // return false; // Default if check is not implemented
-    }
-
-    // --- Placeholder methods for accessing First/Follow sets ---
-    // --- You need to replace these with actual access to your computed sets ---
-    private Set<String> getFirstSetForRule(String nonTerminal) {
-        // Example: Retrieve from a map passed during construction or recompute
-        // For now, return empty set to avoid null pointers
-        return Collections.emptySet(); // Replace with actual logic
-    }
-    private Set<String> getFollowSetForRule(String nonTerminal) {
-        // Example: Retrieve from a map passed during construction or recompute
-        // For now, return empty set to avoid null pointers
-        return Collections.emptySet(); // Replace with actual logic
-    }
-    // --- End Placeholder methods ---
-
-
-    // Modified to accept current line number
     private void handleError(String message, String expectedOrNonTerminal, Token found) {
-        System.err.println("Parsing Error at Line " + found.getLine() + ": " + message); // Use found.getLine()
+        System.err.println("\n--------------------");
+        System.err.println("Parsing Error at Line " + found.getLine() + ": " + message);
         if (isTerminal(expectedOrNonTerminal)) {
-            System.err.println("  While expecting Terminal: " + expectedOrNonTerminal);
+            System.err.println("  Expected Terminal: " + expectedOrNonTerminal);
         } else {
             System.err.println("  While processing NonTerminal: " + expectedOrNonTerminal);
         }
-        System.err.println("  Found Token: '" + found.getName() + "' (Value: " + found.getValue() + ")");
-        System.err.println("  No valid production rule found in parsing table for this combination.");
+        System.err.println("  Found Token: '" + found.getName() + "' (Value: " + (found.getValue() != null ? found.getValue() : "N/A") + ")");
+        System.err.println("  Current Symbol Stack Top: " + (symbolStack.isEmpty() ? "EMPTY" : symbolStack.peek()));
+        if (!isTerminal(expectedOrNonTerminal) && parsingTable.containsKey(expectedOrNonTerminal)) {
+            System.err.println("  Possible next terminals for " + expectedOrNonTerminal + ": " + parsingTable.get(expectedOrNonTerminal).keySet());
+        }
+        // Print full stacks on error for more context
+        System.err.println("  Symbol Stack on Error: " + symbolStack);
+        List<String> nodeSymbols = new ArrayList<>();
+        for (ParseTreeNode node : nodeStack) {
+            nodeSymbols.add(node.getSymbol());
+        }
+        System.err.println("  Node Stack Symbols on Error: " + nodeSymbols);
+        System.err.println("--------------------");
     }
 
     public ParseTreeNode getParseTreeRoot() {
