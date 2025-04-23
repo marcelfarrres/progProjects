@@ -1,4 +1,3 @@
-// FILE: Business/Parser/Parser.java
 package Business.Parser;
 
 import Business.Scanner.Scanner;
@@ -18,13 +17,11 @@ public class Parser {
     private Stack<Object> symbolStack;
     private Stack<ParseTreeNode> nodeStack;
 
-    // Constructor remains the same as the previous version
     public Parser(Scanner scanner) throws IOException {
         this.scanner = scanner;
         this.symbolStack = new Stack<>();
         this.nodeStack = new Stack<>();
 
-        // --- Build Grammar, First/Follow, Parsing Table ---
         System.out.println("\n--- Initializing Parser and Building Structures ---");
         try {
             GrammarAnalysis grammarAnalysis = new GrammarAnalysis(null);
@@ -51,25 +48,20 @@ public class Parser {
             e.printStackTrace();
             throw new IOException("Parser initialization failed.", e);
         }
-        // --- End Structure Building ---
 
-        fetchNextToken(); // Get the first token
+        fetchNextToken();
     }
 
-    // fetchNextToken remains the same
     private void fetchNextToken() throws IOException {
         currentToken = scanner.nextToken();
-        // Optional: Print fetched token
         System.out.println(">>> Fetched Token: " + currentToken.getName() +
                 (currentToken.getValue() != null && !currentToken.getValue().equals(currentToken.getName()) ? " ["+currentToken.getValue()+"]" : "") +
                 (currentToken.getName().equals("$") ? "" : " (Line: " + currentToken.getLine() + ")"));
     }
 
-
     public ParseTreeNode parse() throws IOException {
         System.out.println("\nStarting Parse Tree Construction (Token by Token)...");
 
-        // Initialize stacks
         symbolStack.push("$");
         String startSymbol = "<program>";
         if (!grammarMap.containsKey(startSymbol)) {
@@ -80,10 +72,8 @@ public class Parser {
         root = new ParseTreeNode(startSymbol);
         nodeStack.push(root);
 
-        // Loop until stack has only $ or error
         while (!symbolStack.isEmpty() && !symbolStack.peek().equals("$")) {
 
-            // --- DETAILED DEBUG LOGGING ---
             String topSymbol = (String) symbolStack.peek();
             String currentTokenName = currentToken.getName();
             int currentLine = currentToken.getLine();
@@ -92,58 +82,48 @@ public class Parser {
             System.out.println(">>> DEBUG: Current Token = " + currentTokenName + " (Line: " + currentLine + ")");
             System.out.println(">>> DEBUG: Symbol Stack Top = " + topSymbol);
             System.out.println(">>> DEBUG: Symbol Stack (Full): " + symbolStack);
-            // Print node stack symbols for easier comparison
             List<String> nodeSymbols = new ArrayList<>();
             for (ParseTreeNode node : nodeStack) {
                 nodeSymbols.add(node.getSymbol());
             }
             System.out.println(">>> DEBUG: Node Stack (Symbols): " + nodeSymbols);
             System.out.println("-----------------------------------------");
-            // --- END DEBUG LOGGING ---
-
 
             if (isTerminal(topSymbol)) {
                 System.out.println(">>> Action: Trying to match TERMINAL " + topSymbol);
                 if (topSymbol.equals(currentTokenName)) {
-                    // Match found!
                     System.out.println(">>> Success: Matched terminal " + topSymbol);
                     symbolStack.pop();
-                    nodeStack.pop(); // Pop the node for the matched terminal symbol
-                    fetchNextToken(); // Consume token *after* popping
+                    nodeStack.pop();
+                    fetchNextToken();
                 } else {
-                    handleError("Terminal mismatch", topSymbol, currentToken); // Error
+                    handleError("Terminal mismatch", topSymbol, currentToken);
                     root = null;
                     return root;
                 }
-            }
-            else { // Top is Non-Terminal
+            } else {
                 System.out.println(">>> Action: Trying to expand NON-TERMINAL " + topSymbol);
                 String production = getProduction(topSymbol, currentTokenName);
 
                 if (production != null) {
-                    // Print rule application
                     System.out.println("(Line " + String.format("%-3d", currentLine) +
                             " Token: " + String.format("%-15s", currentTokenName) +
                             ") Applying Rule: " + topSymbol + " ::= " +
                             (production.equals("ε") ? "ε" : production));
 
-                    symbolStack.pop(); // Pop NonTerminal A
-                    ParseTreeNode parentNode = nodeStack.pop(); // Pop corresponding node for A
+                    symbolStack.pop();
+                    ParseTreeNode parentNode = nodeStack.pop();
 
                     String[] productionSymbols = production.isEmpty() || production.equals("ε")
                             ? new String[0]
                             : production.split("\\s+");
 
-                    // Handle ε-production
                     if (productionSymbols.length == 0) {
                         System.out.println(">>> Action: Applying Epsilon production for " + parentNode.getSymbol());
                         parentNode.addChild(new ParseTreeNode("ε"));
-                        // DO NOT push anything back onto stacks for epsilon
-                        continue; // Epsilon production handled, continue loop
+                        continue;
                     }
 
-                    // --- Apply Production ---
-                    // 1. Create child nodes and add to parent in grammar order
                     List<ParseTreeNode> childNodes = new ArrayList<>();
                     System.out.print(">>> Action: Creating children for " + parentNode.getSymbol() + ": [");
                     for (String prodSymbol : productionSymbols) {
@@ -156,7 +136,6 @@ public class Parser {
                     }
                     System.out.println("]");
 
-                    // 2. Push symbols and nodes onto stacks in REVERSE grammar order
                     System.out.print(">>> Action: Pushing to stacks (Symbol, Node): ");
                     for (int i = productionSymbols.length - 1; i >= 0; i--) {
                         String symbol = productionSymbols[i];
@@ -171,7 +150,7 @@ public class Parser {
                             }
                         }
                     }
-                    System.out.println(); // Newline after printing pushes
+                    System.out.println();
 
                 } else {
                     handleError("No production found in table", topSymbol, currentToken);
@@ -179,9 +158,8 @@ public class Parser {
                     return root;
                 }
             }
-        } // End while loop
+        }
 
-        // Final check remains the same
         if (symbolStack.peek().equals("$") && currentToken.getName().equals("$")) {
             System.out.println("\nParsing Successful! Parse tree construction complete.");
             if (!nodeStack.isEmpty()) {
@@ -189,7 +167,6 @@ public class Parser {
             }
         } else {
             System.err.println("\nParsing Failed or Incomplete.");
-            // Add more detailed error info based on final state
             if (symbolStack.isEmpty() || !symbolStack.peek().equals("$")) {
                 System.err.println("  Reason: Symbol stack state incorrect. Top: " + (symbolStack.isEmpty() ? "EMPTY" : symbolStack.peek()));
             } else if (!currentToken.getName().equals("$")) {
@@ -197,14 +174,12 @@ public class Parser {
             } else {
                 System.err.println("  Reason: Unknown parsing failure state.");
             }
-            root = null; // Indicate failure
+            root = null;
         }
 
         return root;
     }
 
-
-    // Helper methods (isTerminal, getProduction, handleError) remain the same
     private boolean isTerminal(String symbol) {
         if (symbol == null) return false;
         if (symbol.equals("$")) return true;
@@ -217,7 +192,6 @@ public class Parser {
             Map<String, String> row = parsingTable.get(nonTerminal);
             if (row.containsKey(terminal)) {
                 String production = row.get(terminal);
-                // Standardize epsilon representation if necessary
                 if (production == null || production.trim().isEmpty()) {
                     List<String> rules = grammarMap.get(nonTerminal);
                     for (String rule : rules) {
@@ -225,24 +199,20 @@ public class Parser {
                     }
                     return null;
                 }
-                if (production.equals("ε")) return "ε"; // Explicit epsilon in table
-
-                return production; // Return the production string
-            }
-            // Check for implicit epsilon based on FOLLOW set (Only if FIRST(A) contains ε)
-            else if (firstSet != null && firstSet.containsKey(nonTerminal) && firstSet.get(nonTerminal).contains("ε")) {
+                if (production.equals("ε")) return "ε";
+                return production;
+            } else if (firstSet != null && firstSet.containsKey(nonTerminal) && firstSet.get(nonTerminal).contains("ε")) {
                 if (followSet != null && followSet.containsKey(nonTerminal) && followSet.get(nonTerminal).contains(terminal)) {
                     List<String> rules = grammarMap.get(nonTerminal);
                     for (String rule : rules) {
                         if (rule.equals("ε") || rule.trim().isEmpty()) {
-                            // System.out.println("DEBUG: Implicit epsilon for " + nonTerminal + " on token " + terminal + " via FOLLOW set.");
-                            return "ε"; // Return epsilon based on Follow set check AND grammar confirmation
+                            return "ε";
                         }
                     }
                 }
             }
         }
-        return null; // No production found
+        return null;
     }
 
     private void handleError(String message, String expectedOrNonTerminal, Token found) {
@@ -258,7 +228,6 @@ public class Parser {
         if (!isTerminal(expectedOrNonTerminal) && parsingTable.containsKey(expectedOrNonTerminal)) {
             System.err.println("  Possible next terminals for " + expectedOrNonTerminal + ": " + parsingTable.get(expectedOrNonTerminal).keySet());
         }
-        // Print full stacks on error for more context
         System.err.println("  Symbol Stack on Error: " + symbolStack);
         List<String> nodeSymbols = new ArrayList<>();
         for (ParseTreeNode node : nodeStack) {

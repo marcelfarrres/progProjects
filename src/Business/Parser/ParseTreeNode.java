@@ -1,26 +1,26 @@
-package Business.Parser; // Or your chosen package
+package Business.Parser; // or whatever pkg u use
 
 import Business.Scanner.Tokens.Token;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParseTreeNode {
-    private String symbol; // Non-terminal or terminal name
-    private Token token;   // The actual token if it's a terminal leaf
+    private String symbol; // terminal or NONterminal name
+    private Token token;   // real token if this is a leaf
     private List<ParseTreeNode> children;
 
-    // Constructor for non-terminal nodes
+    // constructor for non-terminals
     public ParseTreeNode(String symbol) {
         this.symbol = symbol;
         this.token = null;
         this.children = new ArrayList<>();
     }
 
-    // Constructor for terminal/leaf nodes
+    // constructor for terminals (aka leaves)
     public ParseTreeNode(Token token) {
-        this.symbol = token.getName(); // Use token name as symbol
+        this.symbol = token.getName(); // use the token name for symbol
         this.token = token;
-        this.children = new ArrayList<>(); // Leaf nodes have no children initially
+        this.children = new ArrayList<>(); // leaves got no kids at start
     }
 
     public void addChild(ParseTreeNode child) {
@@ -39,7 +39,7 @@ public class ParseTreeNode {
         return children;
     }
 
-    // Method to print the tree (recursive) - for visualization
+    // print the whole tree recursively, kinda nice to see
     public void printTree(String indent, boolean last) {
         System.out.print(indent);
         if (last) {
@@ -50,7 +50,7 @@ public class ParseTreeNode {
             indent += "│  ";
         }
 
-        // Print node information (symbol and value if applicable)
+        // show symbol and value (if any)
         String nodeValue = (token != null && token.getValue() != null) ? " [" + token.getValue() + "]" : "";
         System.out.println(symbol + nodeValue);
 

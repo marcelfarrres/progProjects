@@ -24,23 +24,16 @@ public class GrammarAnalysis {
                 if (line.isEmpty() || line.startsWith("//")) {
                     continue;
                 }
-                String[] parts = line.split("::=", 2); // Split only on the first "::="
+                String[] parts = line.split("::=", 2);
                 if (parts.length == 2) {
                     String left = parts[0].trim();
                     String right = parts[1].trim();
 
-                    // Preserve operators and avoid breaking symbols incorrectly
                     List<String> productionList = new ArrayList<>();
                     String[] productions = right.split("(?<!\\|)\\|(?!\\|)");
 
-
                     for (String production : productions) {
                         production = production.trim();
-
-                        // Fix for operators
-                        //production = production.replaceAll("\"", ""); // Remove quotes around special characters
-                        //production = production.replaceAll("assign", "="); // Convert to standard assignment
-
                         productionList.add(production);
                     }
 
@@ -56,13 +49,10 @@ public class GrammarAnalysis {
         }
     }
 
-
     public HashMap<String, List<String>> getGrammarMap() {
         return grammarMap;
     }
 
-
-    //print grammar
     public void printGrammar() {
         System.out.println("Grammar:");
         for (String nonTerminal : grammarMap.keySet()) {
@@ -77,5 +67,4 @@ public class GrammarAnalysis {
             System.out.println();
         }
     }
-
 }

@@ -115,7 +115,6 @@ public class FirstFollowBuilder {
         followSet.get("<program>").add("$");
     }
 
-
     public void buildFollowSet() {
         boolean updated = true;
 
@@ -129,18 +128,15 @@ public class FirstFollowBuilder {
                     for (int i = 0; i < symbols.length; i++) {
                         String symbol = symbols[i];
 
-                        if (!isTerminal(symbol)) { // Only consider non-terminals
+                        if (!isTerminal(symbol)) {
                             if (i < symbols.length - 1) {
-                                // Case: Symbol followed by another symbol
                                 String nextSymbol = symbols[i + 1];
 
                                 if (isTerminal(nextSymbol)) {
-                                    // If next symbol is terminal, add it to Follow(symbol)
                                     if (followSet.get(symbol).add(nextSymbol)) {
                                         updated = true;
                                     }
                                 } else {
-                                    // If next symbol is non-terminal, add its First set (excluding ε)
                                     Set<String> firstNext = firstSet.get(nextSymbol);
                                     if (firstNext != null) {
                                         for (String terminal : firstNext) {
@@ -151,7 +147,7 @@ public class FirstFollowBuilder {
                                             }
                                         }
                                     }
-                                    // If next symbol has ε, inherit Follow(nonTerminal)
+
                                     if (firstNext.contains("ε")) {
                                         if (followSet.get(symbol).addAll(followSet.get(nonTerminal))) {
                                             updated = true;
@@ -159,7 +155,6 @@ public class FirstFollowBuilder {
                                     }
                                 }
                             } else {
-                                // Case: Symbol is last in production, inherit Follow(nonTerminal)
                                 if (followSet.get(symbol).addAll(followSet.get(nonTerminal))) {
                                     updated = true;
                                 }
@@ -178,7 +173,6 @@ public class FirstFollowBuilder {
         }
     }
 
-    //get follow set
     public HashMap<String, Set<String>> getFirstSet(){
         return firstSet;
     }
@@ -190,5 +184,4 @@ public class FirstFollowBuilder {
     public HashMap<String, List<String>> getGrammarMap(){
         return grammarMap;
     }
-
 }
